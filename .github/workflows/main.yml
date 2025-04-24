@@ -15,20 +15,31 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+
+    - name: Create virtual environment
       run: |
+        python -m venv venv
+
+    - name: Activate virtual environment and install dependencies
+      run: |
+        source venv/bin/activate
         python -m pip install --upgrade pip
-        pip install pytest
+        pip install -r requirements.txt
         pip install -e .
-    - name: Lint with flake8
+
+    - name: Run linting
       run: |
+        source venv/bin/activate
         pip install flake8
         flake8 nfc_library tests
-    - name: Test with pytest
+
+    - name: Run tests
       run: |
+        source venv/bin/activate
         # Set CI=true to auto-skip hardware tests
         CI=true pytest tests/
