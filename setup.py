@@ -17,7 +17,7 @@ setup(
     version=version,
     author="Ahmed Abdelkhalek",
     author_email="opensource@mgtk.io",
-    description="A high-level Python library for NFC operations",
+    description="A high-level Python wrapper library for NFC operations",
     url="https://github.com/ahmed93/python-nfclib",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -39,7 +39,7 @@ setup(
     ],
     keywords="nfc, rfid, acr122u, ndef",
     packages=find_packages(include=["nfc_library", "nfc_library.*"]),
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     install_requires=[
         "nfcpy",
         "ndef",

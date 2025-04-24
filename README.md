@@ -1,12 +1,30 @@
 # Python NFC Library
 
-A high-level Python library for interacting with NFC (Near Field Communication) devices and tags on Linux systems (including Raspberry Pi) with a focus on reliability and ease of use.
+A high-level Python wrapper library for interacting with NFC (Near Field Communication) devices and tags on Linux systems (including Raspberry Pi) with a focus on reliability and ease of use.
+
+## Architecture
+
+This library serves as a simplified abstraction layer over lower-level NFC libraries:
+
+```
+Your Application
+       ↓
+Python NFC Library (this library)
+       ↓
+ nfcpy and ndef libraries
+       ↓
+   NFC Hardware
+```
+
+By wrapping the more complex nfcpy library, we provide a cleaner, more developer-friendly API that handles common edge cases, errors, and configuration while maintaining the full power of the underlying libraries.
 
 ## Features
 
+- **Simplified API**: Abstracts away hardware-specific details while maintaining full functionality
 - Automatic device detection for ACR122U NFC readers
-- Simple API for reading and writing NDEF messages to NFC tags
+- Clean, high-level interface for reading and writing NDEF messages to NFC tags
 - Support for various NDEF record types (Text, URI)
+- Built-in error handling for hardware timeouts and failures
 - Configurable timeouts, retries, and validation
 - Comprehensive logging
 - Thread-safe operations
@@ -224,6 +242,36 @@ If the library cannot detect your NFC reader:
 2. Keep the tag still over the reader during operations
 3. Increase the timeout value in the configuration
 4. Check the logs for detailed error messages
+
+### Test Failures During Publishing
+
+If you're experiencing test failures during the publishing process, the most common issues are:
+
+1. **Missing hardware**: CI environments may not have NFC readers attached
+   - Solution: Add a mock mode for tests that doesn't require physical hardware
+   - Example: Add `MOCK_MODE=True` environment variable detection in tests
+
+2. **Permissions issues**: CI runners may not have proper USB access permissions
+   - Solution: Ensure tests can be run with a `--no-hardware` flag that skips hardware-dependent tests
+
+3. **Timing issues**: Hardware operations might timeout in constrained CI environments
+   - Solution: Increase timeouts specifically in test mode
+
+To address these, add this to your test suite:
+
+```python
+import os
+import pytest
+
+# Skip hardware tests when running in CI
+SKIP_HARDWARE_TESTS = os.environ.get('SKIP_HARDWARE_TESTS', 'False').lower() in ('true', '1', 't')
+
+@pytest.mark.skipif(SKIP_HARDWARE_TESTS, reason="Skipping hardware tests in CI environment")
+class TestHardwareOperations(unittest.TestCase):
+    # Hardware-dependent tests here
+```
+
+Then in your CI configuration, set `SKIP_HARDWARE_TESTS=True`.
 
 ## License
 

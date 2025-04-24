@@ -1,2 +1,5 @@
 nfcpy>=1.0.4
 ndef>=0.3.0
+pytest>=6.0.0
+black>=21.5b2
+isort>=5.9.0
