@@ -7,7 +7,7 @@ import time
 import os
 import logging
 import threading
-from typing import List, Dict, Any, Optional, Union, Tuple, cast
+from typing import List, Dict, Any, Optional, Union
 
 
 class NFCLibrary:
@@ -427,7 +427,7 @@ class NFCLibrary:
                 # For ACR122U with pyscard:
                 # self.active_clf.device.transmit([0xFF, 0x00, 0x00, 0x00, 0x00])
                 pass
-        except:
+        except Exception:
             pass
 
     def stop(self) -> None:
