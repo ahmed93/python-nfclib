@@ -20,24 +20,25 @@ By wrapping the more complex nfcpy library, we provide a cleaner, more developer
 
 ## Features
 
-- **Simplified API**: Abstracts away hardware-specific details while maintaining full functionality
-- Automatic device detection for ACR122U NFC readers
-- Clean, high-level interface for reading and writing NDEF messages to NFC tags
-- Support for various NDEF record types (Text, URI)
-- Built-in error handling for hardware timeouts and failures
-- Configurable timeouts, retries, and validation
-- Comprehensive logging
-- Thread-safe operations
+-   **Simplified API**: Abstracts away hardware-specific details while maintaining full functionality
+-   Automatic device detection for ACR122U NFC readers
+-   Clean, high-level interface for reading and writing NDEF messages to NFC tags
+-   Support for various NDEF record types (Text, URI)
+-   Built-in error handling for hardware timeouts and failures
+-   Configurable timeouts, retries, and validation
+-   Comprehensive logging
+-   Thread-safe operations
 
 ## Installation
 
 ### Prerequisites
 
 This library requires the following dependencies:
-- Linux operating system (including Raspberry Pi)
-- Python 3.6+
-- nfcpy
-- ndef
+
+-   Linux operating system (including Raspberry Pi)
+-   Python 3.9+
+-   nfcpy
+-   ndef
 
 Install dependencies using pip:
 
@@ -74,17 +75,17 @@ if devices:
     try:
         # Simple text message
         nfc_lib.write(devices[0], "Hello, NFC!")
-        
+
         # URI message
         nfc_lib.write(devices[0], {"type": "uri", "value": "https://example.com"})
-        
+
         # Multiple records
         message = [
             {"type": "text", "value": "Hello, NFC!"},
             {"type": "uri", "value": "https://example.com"}
         ]
         nfc_lib.write(devices[0], message)
-        
+
     except Exception as e:
         print(f"Error writing to tag: {e}")
     finally:
@@ -99,29 +100,29 @@ The library can be configured using a JSON configuration file. By default, it lo
 
 ```json
 {
-    "devices": [
-        {
-            "id": "reader_1",
-            "path": "usb:123:456",
-            "description": "ACR122U NFC Reader"
-        }
-    ],
-    "lock_on_write": false,
-    "validate_writes": true,
-    "retry_count": 3,
-    "retry_delay": 0.5,
-    "timeout": 5.0
+	"devices": [
+		{
+			"id": "reader_1",
+			"path": "usb:123:456",
+			"description": "ACR122U NFC Reader"
+		}
+	],
+	"lock_on_write": false,
+	"validate_writes": true,
+	"retry_count": 3,
+	"retry_delay": 0.5,
+	"timeout": 5.0
 }
 ```
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `devices` | List of NFC devices | Auto-detected |
-| `lock_on_write` | Whether to lock tags after writing | `false` |
-| `validate_writes` | Validate written data matches the original | `true` |
-| `retry_count` | Number of retries for operations | `3` |
-| `retry_delay` | Delay between retries (seconds) | `0.5` |
-| `timeout` | Timeout for operations (seconds) | `5.0` |
+| Option            | Description                                | Default       |
+| ----------------- | ------------------------------------------ | ------------- |
+| `devices`         | List of NFC devices                        | Auto-detected |
+| `lock_on_write`   | Whether to lock tags after writing         | `false`       |
+| `validate_writes` | Validate written data matches the original | `true`        |
+| `retry_count`     | Number of retries for operations           | `3`           |
+| `retry_delay`     | Delay between retries (seconds)            | `0.5`         |
+| `timeout`         | Timeout for operations (seconds)           | `5.0`         |
 
 If no configuration file is found, the library will use default values and attempt to auto-detect devices.
 
@@ -132,36 +133,42 @@ If no configuration file is found, the library will use default values and attem
 Creates and returns a new instance of the NFC library.
 
 **Parameters:**
-- `config_path` (str): Path to the configuration file
-- `logger` (logging.Logger, optional): Custom logger instance
+
+-   `config_path` (str): Path to the configuration file
+-   `logger` (logging.Logger, optional): Custom logger instance
 
 **Returns:**
-- `NFCLibrary`: A new library instance
+
+-   `NFCLibrary`: A new library instance
 
 ### `NFCLibrary.devices()`
 
 Returns a list of available device IDs.
 
 **Returns:**
-- `List[str]`: List of device IDs
+
+-   `List[str]`: List of device IDs
 
 ### `NFCLibrary.write(device_id, message)`
 
 Writes an NDEF message to a tag and returns immediately after a successful write.
 
 **Parameters:**
-- `device_id` (str): The ID of the device to use
-- `message` (Union[str, Dict, List]): The message to write, which can be:
-  - A string for a simple text message
-  - A dictionary with 'type' and 'value' keys for a single record
-  - A list of dictionaries for multiple records
+
+-   `device_id` (str): The ID of the device to use
+-   `message` (Union[str, Dict, List]): The message to write, which can be:
+    -   A string for a simple text message
+    -   A dictionary with 'type' and 'value' keys for a single record
+    -   A list of dictionaries for multiple records
 
 **Returns:**
-- `bool`: True if successful
+
+-   `bool`: True if successful
 
 **Raises:**
-- `ValueError`: If the device ID is invalid or the message format is incorrect
-- `Exception`: If no tag is detected within the timeout period
+
+-   `ValueError`: If the device ID is invalid or the message format is incorrect
+-   `Exception`: If no tag is detected within the timeout period
 
 ### `NFCLibrary.stop()`
 
@@ -248,14 +255,16 @@ If the library cannot detect your NFC reader:
 If you're experiencing test failures during the publishing process, the most common issues are:
 
 1. **Missing hardware**: CI environments may not have NFC readers attached
-   - Solution: Add a mock mode for tests that doesn't require physical hardware
-   - Example: Add `MOCK_MODE=True` environment variable detection in tests
+
+    - Solution: Add a mock mode for tests that doesn't require physical hardware
+    - Example: Add `MOCK_MODE=True` environment variable detection in tests
 
 2. **Permissions issues**: CI runners may not have proper USB access permissions
-   - Solution: Ensure tests can be run with a `--no-hardware` flag that skips hardware-dependent tests
+
+    - Solution: Ensure tests can be run with a `--no-hardware` flag that skips hardware-dependent tests
 
 3. **Timing issues**: Hardware operations might timeout in constrained CI environments
-   - Solution: Increase timeouts specifically in test mode
+    - Solution: Increase timeouts specifically in test mode
 
 To address these, add this to your test suite:
 
