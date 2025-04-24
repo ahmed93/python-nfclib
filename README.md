@@ -1,110 +1,112 @@
-# Python NFC Library
+# NFC Library
 
-A high-level Python wrapper library for interacting with NFC (Near Field Communication) devices and tags on Linux systems (including Raspberry Pi) with a focus on reliability and ease of use.
+A high-level wrapper for NFC operations that simplifies working with NFC readers and tags.
 
-## Architecture
+## Overview
 
-This library serves as a simplified abstraction layer over lower-level NFC libraries:
-
-```
-Your Application
-       ↓
-Python NFC Library (this library)
-       ↓
- nfcpy and ndef libraries
-       ↓
-   NFC Hardware
-```
-
-By wrapping the more complex nfcpy library, we provide a cleaner, more developer-friendly API that handles common edge cases, errors, and configuration while maintaining the full power of the underlying libraries.
+This library provides an easy-to-use interface for NFC (Near Field Communication) operations, specifically designed to simplify tag reading and writing. It wraps the lower-level nfcpy and ndef libraries to provide a more user-friendly experience with robust error handling, automatic device detection, and configurable settings.
 
 ## Features
 
--   **Simplified API**: Abstracts away hardware-specific details while maintaining full functionality
--   Automatic device detection for ACR122U NFC readers
--   Clean, high-level interface for reading and writing NDEF messages to NFC tags
--   Support for various NDEF record types (Text, URI)
--   Built-in error handling for hardware timeouts and failures
--   Configurable timeouts, retries, and validation
--   Comprehensive logging
--   Thread-safe operations
+-   **Auto-detection** of NFC readers (specifically ACR122U devices)
+-   **Simple write** operations with built-in validation
+-   **Robust error handling** with timeouts and retries
+-   **Comprehensive logging** for debugging
+-   **Configuration** via JSON file
+-   **Thread-safe** operations
+-   **Terminal application** for interactive use
 
 ## Installation
 
-### Prerequisites
-
-This library requires the following dependencies:
-
--   Linux operating system (including Raspberry Pi)
--   Python 3.9+
--   nfcpy
--   ndef
-
-Install dependencies using pip:
+1. Install the required dependencies:
 
 ```bash
-pip install nfcpy ndef
+pip install -r requirements.txt
 ```
 
-### Installation
+2. Ensure you have the appropriate drivers for your NFC reader devices.
+    - For ACR122U readers on Linux, ensure pcscd service is running:
+        ```bash
+        sudo apt-get install pcscd
+        sudo systemctl start pcscd
+        sudo systemctl enable pcscd
+        ```
 
-```bash
-# Using pip
-pip install python-nfc-library
+## Usage
 
-# Manual installation
-git clone https://github.com/yourusername/python-nfc-library.git
-cd python-nfc-library
-pip install -e .
-```
-
-## Quick Start
+### Library Usage
 
 ```python
+import logging
 from nfc_library import create_nfc_library
 
-# Create an instance of the library
-nfc_lib = create_nfc_library()
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("nfc_app")
+
+# Create an NFC library instance with auto-detection
+nfc_lib = create_nfc_library(logger=logger)
 
 # Get available devices
 devices = nfc_lib.devices()
-print(f"Available devices: {devices}")
-
-# Write a text message to a tag
 if devices:
+    # Write a simple text message to the first detected device
     try:
-        # Simple text message
-        nfc_lib.write(devices[0], "Hello, NFC!")
-
-        # URI message
-        nfc_lib.write(devices[0], {"type": "uri", "value": "https://example.com"})
-
-        # Multiple records
-        message = [
-            {"type": "text", "value": "Hello, NFC!"},
-            {"type": "uri", "value": "https://example.com"}
-        ]
-        nfc_lib.write(devices[0], message)
-
+        nfc_lib.write(devices[0], "Hello, NFC World!")
+        logger.info("Write successful!")
     except Exception as e:
-        print(f"Error writing to tag: {e}")
-    finally:
-        nfc_lib.stop()
+        logger.error(f"Write failed: {e}")
+else:
+    logger.error("No NFC devices detected")
+
+# Clean up resources
+nfc_lib.stop()
+```
+
+### Terminal Application
+
+The package includes a simple terminal application (`nfc_terminal.py`) to interact with NFC tags without writing code:
+
+```bash
+# Run the terminal application
+python nfc_terminal.py
+
+# With debug logging enabled
+python nfc_terminal.py --debug
+```
+
+The terminal application provides options to:
+
+-   Write text messages to tags
+-   Write URLs to tags
+-   Write contact information (with optional website link)
+
+### Advanced Usage: Multiple Record Types
+
+```python
+# Create a multi-record message
+message = [
+    {"type": "text", "value": "Product: Super Widget"},
+    {"type": "uri", "value": "https://example.com/products/123"}
+]
+
+# Write to the device
+nfc_lib.write(device_id, message)
 ```
 
 ## Configuration
 
-The library can be configured using a JSON configuration file. By default, it looks for a file named `config.json` in the current directory.
+The library can be configured using a JSON file. Default location is `config.json` in the working directory.
 
-### Configuration Options
+Example configuration:
 
 ```json
 {
 	"devices": [
 		{
-			"id": "reader_1",
-			"path": "usb:123:456",
-			"description": "ACR122U NFC Reader"
+			"id": "main_reader",
+			"path": "usb:072f:2200",
+			"description": "ACR122U at reception desk"
 		}
 	],
 	"lock_on_write": false,
@@ -115,172 +117,69 @@ The library can be configured using a JSON configuration file. By default, it lo
 }
 ```
 
-| Option            | Description                                | Default       |
-| ----------------- | ------------------------------------------ | ------------- |
-| `devices`         | List of NFC devices                        | Auto-detected |
-| `lock_on_write`   | Whether to lock tags after writing         | `false`       |
-| `validate_writes` | Validate written data matches the original | `true`        |
-| `retry_count`     | Number of retries for operations           | `3`           |
-| `retry_delay`     | Delay between retries (seconds)            | `0.5`         |
-| `timeout`         | Timeout for operations (seconds)           | `5.0`         |
+### Configuration Options
 
-If no configuration file is found, the library will use default values and attempt to auto-detect devices.
+-   `devices`: Array of configured NFC devices
+    -   `id`: Unique identifier for the device
+    -   `path`: Path to the device (usually USB path)
+    -   `description`: Human-readable description
+-   `lock_on_write`: Whether to lock tags after writing
+-   `validate_writes`: Whether to validate data after writing
+-   `retry_count`: Number of retries for failed operations
+-   `retry_delay`: Delay between retries (seconds)
+-   `timeout`: Operation timeout (seconds)
 
-## API Reference
+If no configuration file is found, the library will attempt to auto-detect connected NFC readers.
 
-### `create_nfc_library(config_path="config.json", logger=None)`
+## Supported NFC Operations
 
-Creates and returns a new instance of the NFC library.
+Currently, the library supports:
 
-**Parameters:**
+-   Writing Text records to NFC tags
+-   Writing URI records to NFC tags
+-   Writing multiple records of different types
+-   Automatic validation of written data
 
--   `config_path` (str): Path to the configuration file
--   `logger` (logging.Logger, optional): Custom logger instance
+## Supported Devices
 
-**Returns:**
-
--   `NFCLibrary`: A new library instance
-
-### `NFCLibrary.devices()`
-
-Returns a list of available device IDs.
-
-**Returns:**
-
--   `List[str]`: List of device IDs
-
-### `NFCLibrary.write(device_id, message)`
-
-Writes an NDEF message to a tag and returns immediately after a successful write.
-
-**Parameters:**
-
--   `device_id` (str): The ID of the device to use
--   `message` (Union[str, Dict, List]): The message to write, which can be:
-    -   A string for a simple text message
-    -   A dictionary with 'type' and 'value' keys for a single record
-    -   A list of dictionaries for multiple records
-
-**Returns:**
-
--   `bool`: True if successful
-
-**Raises:**
-
--   `ValueError`: If the device ID is invalid or the message format is incorrect
--   `Exception`: If no tag is detected within the timeout period
-
-### `NFCLibrary.stop()`
-
-Stops all active NFC connections.
-
-## Message Formats
-
-The library supports three formats for messages:
-
-### Simple Text
-
-```python
-message = "Hello, NFC!"
-```
-
-### Single Record (Dictionary)
-
-```python
-message = {
-    "type": "text",  # or "uri"
-    "value": "Hello, NFC!"  # or "https://example.com" for URI
-}
-```
-
-### Multiple Records (List of Dictionaries)
-
-```python
-message = [
-    {
-        "type": "text",
-        "value": "Hello, NFC!"
-    },
-    {
-        "type": "uri",
-        "value": "https://example.com"
-    }
-]
-```
-
-## Logging
-
-The library uses Python's built-in logging module and leverages the default root logger. This makes it easy to integrate with your existing logging configuration. You can configure the root logger or provide a custom logger:
-
-```python
-import logging
-
-# Configure the root logger (applies to all modules using the default logger)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filename='nfc.log'
-)
-
-# Create the library (will use the configured root logger)
-nfc_lib = create_nfc_library()
-
-# Or use a custom logger if needed
-custom_logger = logging.getLogger("my_nfc_app")
-custom_logger.setLevel(logging.DEBUG)
-custom_logger.addHandler(logging.FileHandler("custom_nfc.log"))
-nfc_lib = create_nfc_library(logger=custom_logger)
-```
+The auto-detection feature is configured to detect ACR122U NFC readers. Other devices may be manually specified in the configuration file.
 
 ## Troubleshooting
 
-### Device Detection Issues
+### Common Issues
 
-If the library cannot detect your NFC reader:
+1. **Device not detected**
 
-1. Ensure the device is properly connected
-2. Run `lsusb` to check if the device is recognized by the system
-3. Make sure you have the necessary permissions to access USB devices
-4. Try manually configuring the device in the configuration file
+    - Ensure the device is properly connected
+    - Check that pcscd service is running (Linux)
+    - Try unplugging and reconnecting the device
 
-### Tag Reading/Writing Issues
+2. **Permission issues**
 
-1. Make sure the tag is compatible with NDEF
-2. Keep the tag still over the reader during operations
-3. Increase the timeout value in the configuration
-4. Check the logs for detailed error messages
+    - Ensure your user has permissions to access USB devices
+    - On Linux, you may need to add udev rules for your device
 
-### Test Failures During Publishing
+3. **Tag write failures**
+    - Ensure the tag is NFC Forum Type compatible
+    - Check that the tag has sufficient memory for your data
+    - Hold the tag steady against the reader during operation
 
-If you're experiencing test failures during the publishing process, the most common issues are:
+### Debug Logging
 
-1. **Missing hardware**: CI environments may not have NFC readers attached
-
-    - Solution: Add a mock mode for tests that doesn't require physical hardware
-    - Example: Add `MOCK_MODE=True` environment variable detection in tests
-
-2. **Permissions issues**: CI runners may not have proper USB access permissions
-
-    - Solution: Ensure tests can be run with a `--no-hardware` flag that skips hardware-dependent tests
-
-3. **Timing issues**: Hardware operations might timeout in constrained CI environments
-    - Solution: Increase timeouts specifically in test mode
-
-To address these, add this to your test suite:
+To enable debug logging for troubleshooting:
 
 ```python
-import os
-import pytest
-
-# Skip hardware tests when running in CI
-SKIP_HARDWARE_TESTS = os.environ.get('SKIP_HARDWARE_TESTS', 'False').lower() in ('true', '1', 't')
-
-@pytest.mark.skipif(SKIP_HARDWARE_TESTS, reason="Skipping hardware tests in CI environment")
-class TestHardwareOperations(unittest.TestCase):
-    # Hardware-dependent tests here
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("nfc_app")
+nfc_lib = create_nfc_library(logger=logger)
 ```
 
-Then in your CI configuration, set `SKIP_HARDWARE_TESTS=True`.
+You can also run the terminal application with debug logging:
+
+```bash
+python nfc_terminal.py --debug
+```
 
 ## License
 
