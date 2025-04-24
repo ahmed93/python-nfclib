@@ -68,9 +68,7 @@ class NFCLibrary:
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
-                self.logger.info(
-                    f"Successfully loaded configuration from {config_path}"
-                )
+                self.logger.info(f"Successfully loaded configuration from {config_path}")
         except json.JSONDecodeError as e:
             self.logger.error(f"Failed to parse configuration file: {e}")
             raise
@@ -129,7 +127,8 @@ class NFCLibrary:
                             "description": "ACR122U NFC Reader (Auto-detected)",
                         }
                         self.config["devices"].append(device_info)
-                        self.logger.info(f"Detected device: {device_info}")
+                        if self.logger.isEnabledFor(logging.DEBUG):
+                            self.logger.debug(f"Detected device: {device_info}")
         except Exception as e:
             self.logger.error(f"Error during device scan: {e}")
             raise
@@ -373,7 +372,7 @@ class NFCLibrary:
                     write_completed.set()
 
                 except Exception as e:
-                    self.logger.error(f"Error during tag operation: {e}")
+                    self.logger.error("Error during tag operation: %s", str(e))
 
                 return True
 
@@ -381,9 +380,8 @@ class NFCLibrary:
             try:
                 # Use direct connect rather than threading to avoid race conditions
                 self.active_clf.connect(
-                    rdwr={"on-connect": on_tag_connect},
-                    terminate=lambda: write_completed.is_set()
-                    or not self.is_connection_active,
+                    rdwr={'on-connect': on_tag_connect},
+                    terminate=lambda: write_completed.is_set() or not self.is_connection_active
                 )
             except Exception as e:
                 self.logger.error(f"Connection error: {e}")
