@@ -17,7 +17,7 @@ class NFCLibrary:
         self.logger.info("Initializing NFC Library")
         self.config = self._load_config(config_path)
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug(f"Loaded configuration: {self.config}")
+            self.logger.info(f"Loaded configuration from {config_path}")
         self.active_device_id = None
         self.active_clf = None
         self.is_connection_active = False
@@ -51,9 +51,8 @@ class NFCLibrary:
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         if not os.path.exists(config_path):
-            self.logger.warning(
-                f"Configuration file {config_path} not found. Using default configuration."
-            )
+            self.logger.warning(f"Loaded default configuration")
+            
             # Create default configuration
             default_config = {
                 "devices": [],
@@ -68,7 +67,7 @@ class NFCLibrary:
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
-                self.logger.info(f"Successfully loaded configuration from {config_path}")
+                self.logger.info(f"Loaded configuration from {config_path}")
         except json.JSONDecodeError as e:
             self.logger.error(f"Failed to parse configuration file: {e}")
             raise
@@ -130,7 +129,7 @@ class NFCLibrary:
                         if self.logger.isEnabledFor(logging.DEBUG):
                             self.logger.debug(f"Detected device: {device_info}")
         except Exception as e:
-            self.logger.error(f"Error during device scan: {e}")
+            self.logger.error("Error during tag operation: %s", str(e))
             raise
 
     def devices(self) -> List[str]:
